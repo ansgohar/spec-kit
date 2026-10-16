@@ -35,7 +35,7 @@ flowchart TD
     B[Install uv & Spec Kit CLI\n`uv tool install specify-cli`]:::mandatory
     C[Initialise project\n`specify init <name>`]:::mandatory
     D{Agent integration\nneeded?}:::decision
-    E[Add integration at init\n`--integration copilot|cline`]:::optional
+    E[Add integration at init\n`--integration copilot` or `cline`]:::optional
     F[Add integration post-init\n`specify integration install copilot`]:::optional
     G[Skip integration\nuse CLI only]:::optional
 
