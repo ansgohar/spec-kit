@@ -1,4 +1,4 @@
-I am building a Spring Boot web application using Java 21.
+I am building a Spring Boot web application using Java 25.
 
 Help me create a project constitution that defines the permanent engineering standards for this project. These rules must apply to every feature that will ever be developed.
 
@@ -8,8 +8,8 @@ Use the following project standards when creating the constitution.
 
 ## Technology Stack
 
-* Java 21 (latest LTS)
-* Spring Boot 4.1.1 (latest stable)
+* Java 25 (latest LTS, released September 2025)
+* Spring Boot 4.1.1 (latest stable, requires Java 17+, compatible with Java 25)
 * Spring Framework 7.0.9 (latest stable, managed transitively via Spring Boot)
 * Maven
 * Thymeleaf for server-side rendered views
