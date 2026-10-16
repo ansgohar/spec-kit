@@ -1,0 +1,127 @@
+I am building a Spring Boot web application using Java 21.
+
+Help me create a project constitution that defines the permanent engineering standards for this project. These rules must apply to every feature that will ever be developed.
+
+The constitution should focus only on long-term project principles. Do not include feature-specific requirements, business rules, or implementation details for any individual feature.
+
+Use the following project standards when creating the constitution.
+
+## Technology Stack
+
+* Java 21 (latest LTS)
+* Spring Boot 4.1.1 (latest stable)
+* Spring Framework 7.0.9 (latest stable, managed transitively via Spring Boot)
+* Maven
+* Thymeleaf for server-side rendered views
+* Spring Data JPA
+* MySQL for production
+* H2 for development
+* Flyway for database migrations
+* Spring Security with form-based authentication
+
+## Architecture
+
+Apply Clean Architecture principles throughout the project:
+
+* Organise source code into four explicit layers: Domain, Application, Infrastructure, and Presentation.
+* The Dependency Rule is absolute: outer layers may depend on inner layers, but inner layers must never depend on outer layers.
+* The Domain layer contains entities, value objects, and domain services. It has zero dependencies on frameworks or infrastructure.
+* The Application layer contains use-case interactors and application services. It depends only on the Domain layer and defines ports (interfaces) for external dependencies.
+* The Infrastructure layer implements ports defined by the Application layer: repositories, messaging adapters, external API clients, and persistence configuration.
+* The Presentation layer contains Spring MVC controllers, Thymeleaf templates, and request/response DTOs. It depends only on Application layer ports.
+* Business logic belongs exclusively in the Domain and Application layers.
+* Controllers must only translate HTTP input into use-case calls and return the result to the view.
+* No framework annotations (e.g., `@Entity`, `@Service`) may appear in the Domain layer.
+
+## Clean Code Standards
+
+Apply the following Clean Code principles to every class and method:
+
+* **Meaningful names**: class names, method names, and variable names must clearly express intent without requiring a comment to explain them.
+* **Small methods**: each method should do one thing and do it well. Methods longer than twenty lines are a signal to decompose.
+* **Single Responsibility**: every class must have exactly one reason to change.
+* **No magic numbers or strings**: extract constants or enums with descriptive names.
+* **No dead code**: remove commented-out code, unused imports, and unreachable branches immediately.
+* **Avoid deep nesting**: use early returns, guard clauses, and extraction to limit nesting to at most two levels.
+* **DRY (Don't Repeat Yourself)**: duplicate logic must be extracted into a shared abstraction before a second use is committed.
+* **Comments explain why, not what**: the code itself must express what it does; comments are reserved for non-obvious business rationale.
+
+## Dependency Injection
+
+* Use constructor injection exclusively.
+* Never use field injection.
+* Declare dependencies through interfaces (ports), never concrete implementations, in the Application and Domain layers.
+
+## Data Transfer Objects
+
+* Use Java records for DTOs and value objects.
+* Do not expose JPA entities directly to the Presentation layer.
+* Map between layers at the boundary using explicit mapper classes or static factory methods.
+
+## Validation
+
+* Validate all user input using Jakarta Bean Validation at the Presentation layer boundary.
+* Apply domain invariant validation inside Domain entities and value objects.
+* Validation rules should be enforced consistently and never duplicated across layers.
+
+## Exception Handling
+
+* Use a global `@ControllerAdvice` for application-wide exception handling.
+* Define domain-specific checked or unchecked exceptions in the Domain layer; do not leak infrastructure exceptions upward.
+* Display user-friendly error pages instead of exposing internal exceptions or stack traces.
+
+## Persistence
+
+* Use Spring Data JPA for data access within the Infrastructure layer only.
+* Manage all schema changes with Flyway.
+* Prevent N+1 query problems using fetch joins or entity graphs where appropriate.
+* Use lazy loading by default; switch to eager loading only when profiling justifies it.
+* Use pagination for all unbounded collections.
+* Introduce caching only when there is a measurable, documented performance benefit.
+
+## Security
+
+* Use Spring Security with form login.
+* Follow secure defaults: deny-by-default access control, CSRF protection enabled, HTTP security headers configured.
+* Never expose sensitive information in responses, error messages, or logs.
+* Store passwords using BCrypt with a cost factor appropriate for the target environment.
+
+## Configuration
+
+* Use `application.properties`.
+* Maintain separate `dev` and `prod` Spring profiles.
+* Environment-specific secrets and credentials must never be committed to version control; inject them via environment variables or a secrets manager.
+
+## Logging
+
+* Use SLF4J for all logging.
+* Never use `System.out.println()` or `System.err.println()`.
+* Never log passwords, tokens, secrets, PII, or any other sensitive information.
+* Use structured log statements with context (e.g., user ID, request ID) rather than free-form string concatenation.
+
+## Testing
+
+* Write unit tests using JUnit 5 and Mockito.
+* Write integration tests using `@SpringBootTest` for end-to-end slice verification.
+* Every use-case class in the Application layer must have dedicated unit tests covering happy-path and failure scenarios.
+* Domain entities and value objects must be tested without any Spring context.
+* Tests should be easy to read, isolated, deterministic, and maintainable.
+* Aim for high coverage of the Domain and Application layers; infrastructure and controller slices should have integration tests.
+
+## Coding Standards
+
+* Do not use wildcard imports.
+* Do not use Lombok.
+* Prefer composition over inheritance.
+* Reuse existing components before creating new ones.
+* Never generate duplicate code.
+* Do not introduce additional libraries unless there is a clear and justified need.
+* Keep classes and methods focused on a single responsibility (Clean Code SRP).
+* Write self-explanatory code. Add comments only when the intent cannot be understood from the code itself.
+* Apply the Boy Scout Rule: leave every file slightly cleaner than you found it.
+
+## General Principles
+
+Create a constitution that enforces consistency, maintainability, readability, testability, security, and long-term scalability.
+
+The constitution must embed Clean Code and Clean Architecture as first-class, non-negotiable constraints. Every future feature generated by GitHub Spec Kit should automatically follow these standards.
