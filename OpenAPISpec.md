@@ -119,6 +119,12 @@ Iterate on your `users-api.yaml` — fix each reported issue, then re-run `spect
 | `oas3-unused-component` | Remove or reference orphaned `components` entries |
 | `no-$ref-siblings` | Move sibling properties inside the `$ref` target schema |
 
+#### Extra ruleset examples
+
+For community-maintained and extended rulesets — including API style guides, security rules, and organisation-specific linting profiles — see the [Stoplight Spectral Rulesets repository](https://github.com/stoplightio/spectral-rulesets).
+
+For broader API design guidelines and style rules across multiple API frameworks and tools, see the [API Style Book](https://apistylebook.stoplight.io/).
+
 ---
 
 ## Step 3 — Mock and Simulate the API
