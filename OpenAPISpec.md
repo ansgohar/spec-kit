@@ -36,81 +36,13 @@ Create a file named `users-api.yaml` and author your spec following the [OpenAPI
 
 ### Minimal working example
 
-```yaml
-openapi: 3.1.0
+The full spec lives in [`users-api.yaml`](users-api.yaml). Key sections at a glance:
 
-info:
-  title: Users API
-  version: 1.0.0
-  description: Manages user accounts.
-
-servers:
-  - url: http://localhost:3000
-    description: Local development server
-
-tags:
-  - name: Users
-    description: User management operations
-
-paths:
-  /users:
-    get:
-      summary: List all users
-      operationId: listUsers
-      tags:
-        - Users
-      responses:
-        "200":
-          description: A list of users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
-
-  /users/{id}:
-    get:
-      summary: Get a user by ID
-      operationId: getUserById
-      tags:
-        - Users
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: A single user
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "404":
-          description: User not found
-
-components:
-  schemas:
-    User:
-      type: object
-      required:
-        - id
-        - name
-        - email
-      properties:
-        id:
-          type: string
-          example: "u-001"
-        name:
-          type: string
-          example: "Jane Doe"
-        email:
-          type: string
-          format: email
-          example: "jane.doe@example.com"
-```
+- **`info`** — title, version, description
+- **`servers`** — local dev URL (`http://localhost:3000`)
+- **`tags`** — `Users` group
+- **`paths`** — `GET /users` (list) and `GET /users/{id}` (single, with `404`)
+- **`components.schemas`** — reusable `User` model with `id`, `name`, `email` and inline `example` values
 
 ### Authoring standards to follow
 
