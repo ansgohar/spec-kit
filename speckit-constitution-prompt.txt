@@ -13,8 +13,8 @@ Use the following project standards when creating the constitution.
 * Spring Framework 7.0.9 (latest stable, managed transitively via Spring Boot)
 * Maven
 * Spring Data JPA
-* MySQL for production
-* H2 for development and integration testing
+* PostgreSQL for production
+* Embedded PostgreSQL for development and integration testing
 * Flyway for database migrations
 * Spring Security with stateless OAuth2 Resource Server (JWT)
 * Spring Boot Actuator for health, metrics, and observability endpoints
