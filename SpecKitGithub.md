@@ -13,6 +13,17 @@
 - [Spec Kit GitHub & Git Workflow](#spec-kit-github--git-workflow)
   - [Workflow Lifecycle Diagram](#workflow-lifecycle-diagram)
   - [Step-by-Step Command Sequence](#step-by-step-command-sequence)
+    - [Step 1: Initialize Git Repository](#step-1-initialize-git-repository)
+    - [Step 2: Establish Project Constitution](#step-2-establish-project-constitution)
+    - [Step 3: Create Feature Branch & Write Specification](#step-3-create-feature-branch--write-specification)
+    - [Step 4: Clarify Underspecified Areas](#step-4-clarify-underspecified-areas)
+    - [Step 5: Generate Technical Implementation Plan](#step-5-generate-technical-implementation-plan)
+    - [Step 6: Create Verification Checklists](#step-6-create-verification-checklists)
+    - [Step 7: Generate Dependency-Ordered Tasks](#step-7-generate-dependency-ordered-tasks)
+    - [Step 8: Perform Cross-Artifact Consistency Analysis](#step-8-perform-cross-artifact-consistency-analysis)
+    - [Step 9: Sync Tasks to GitHub Issues](#step-9-sync-tasks-to-github-issues)
+    - [Step 10: Execute Implementation & Verification](#step-10-execute-implementation--verification)
+    - [Step 11: Updating & Closing GitHub Issues Post-Implementation](#step-11-updating--closing-github-issues-post-implementation)
 - [Spec Kit Git & GitHub Commands Reference](#spec-kit-git--github-commands-reference)
 - [Extension Hooks System](#extension-hooks-system)
 - [Configuration Guide](#configuration-guide)
@@ -61,8 +72,9 @@ flowchart TD
 
     subgraph Phase 4: Implementation & Delivery
         K --> L[TDD Implementation<br/><code>/speckit-implement</code>]
-        L --> M[Branch Validation<br/><code>speckit.git.validate</code>]
-        M --> N[Auto-Commit<br/><code>speckit.git.commit</code>]
+        L --> M[Issue Status Update<br/><code>Closes #id / API Sync</code>]
+        M --> N[Branch Validation<br/><code>speckit.git.validate</code>]
+        N --> O[Auto-Commit & PR Merge<br/><code>speckit.git.commit</code>]
     end
 
     classDef setup fill:#f9f,stroke:#333,stroke-width:1px;
@@ -158,6 +170,58 @@ speckit.git.initialize
   4. Automatically marks completed tasks as `[X]` in `tasks.md`.
   5. Executes `./mvnw clean verify`.
 - **Optional Post-Hook**: `speckit.git.commit` commits implementation changes.
+
+#### Step 11: Updating & Closing GitHub Issues Post-Implementation
+
+Once `/speckit-implement` finishes and all tasks in `tasks.md` are marked `[X]`, you update and close the corresponding GitHub issues. There are **three recommended patterns**:
+
+##### Pattern A: Native Pull Request Automation (Standard GitHub Workflow)
+GitHub natively links commits and PRs to issues using closing keywords (`Closes #ID`, `Fixes #ID`, `Resolves #ID`).
+
+1. Open a Pull Request from `001-user-registration` to `main`:
+   ```bash
+   gh pr create --title "[001-user-registration] User Registration Feature" --body "## Summary
+   Implements User Registration under Clean Architecture.
+   All 50 unit, slice, and integration tests pass with ./mvnw clean verify.
+
+   ### Closing Issues
+   Closes #9, Closes #10, Closes #11, Closes #12, Closes #13, Closes #14, Closes #15,
+   Closes #16, Closes #17, Closes #18, Closes #19, Closes #20, Closes #21, Closes #22,
+   Closes #23, Closes #24, Closes #25, Closes #26, Closes #27, Closes #28, Closes #29,
+   Closes #30, Closes #31, Closes #32, Closes #33, Closes #34, Closes #35, Closes #36,
+   Closes #37, Closes #38, Closes #39, Closes #40, Closes #41, Closes #42, Closes #43,
+   Closes #44, Closes #45"
+   ```
+2. **Result on Merge**: When the PR is merged into `main`, GitHub automatically closes all 37 issues and marks the Milestone `001-user-registration` as **100% Complete**.
+
+##### Pattern B: Spec Kit Git Commit Hook (`speckit.git.commit`)
+Spec Kit allows configuring post-implementation auto-commits in `.specify/extensions/git/git-config.yml`:
+
+```yaml
+auto_commit:
+  after_implement:
+    enabled: true
+    message: "[Spec Kit] Complete implementation for 001-user-registration (Resolves #9 through #45)"
+```
+
+When you push this commit to GitHub, issues referencing those numbers will automatically link and close upon merging to the default branch.
+
+##### Pattern C: Direct Automated API Synchronization (Instant Issue Closure)
+If you want to close issues immediately on GitHub without waiting for a PR merge:
+1. An automated script iterates through tasks in `tasks.md` that have `[X]`.
+2. Matches the task ID to its GitHub issue number.
+3. Sends a `PATCH` request to the GitHub Issues API:
+   ```http
+   PATCH /repos/{owner}/{repo}/issues/{issue_number}
+   Content-Type: application/json
+
+   {
+     "state": "closed",
+     "state_reason": "completed"
+   }
+   ```
+4. Optionally leaves a verification comment:
+   > *"Task completed and verified in branch `001-user-registration`. All 50 automated tests passed (`./mvnw clean verify`)."*
 
 ---
 
