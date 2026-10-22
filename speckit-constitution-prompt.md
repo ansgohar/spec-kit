@@ -24,6 +24,7 @@ Use the following project standards when creating the constitution.
 - Micrometer with Prometheus registry for metrics
 - OpenAPI 3.1 (Springdoc) for API documentation
 - Spring Cloud OpenFeign for declarative clients used to call external APIs
+- Spring HATEOAS for hypermedia-driven RESTful APIs and HAL link model representation
 
 ## Architecture
 
@@ -35,9 +36,10 @@ Apply Clean Architecture principles throughout the project:
 - The Application layer contains use-case interactors and application services. It depends only on the Domain layer and defines ports (interfaces) for all external dependencies.
 - The Infrastructure layer implements ports defined by the Application layer: JPA repositories, messaging adapters, external HTTP clients, and persistence configuration.
 - Use Spring Cloud OpenFeign clients for all synchronous outbound calls to external APIs. Keep Feign client interfaces and their configuration in the Infrastructure layer, and expose them to the Application layer through its ports.
-- The Presentation (API) layer contains Spring MVC REST controllers and request/response DTOs. It depends only on Application layer ports.
+- The Presentation (API) layer contains Spring MVC REST controllers, hypermedia representation models/assemblers, and request/response DTOs. It depends only on Application layer ports.
 - Business logic belongs exclusively in the Domain and Application layers.
 - Controllers must only translate HTTP input into use-case calls and serialise the result to a response — no business logic in controllers.
+- Hypermedia assembly belongs strictly in the Presentation (API) layer: Domain and Application layers must remain completely decoupled from hypermedia and framework concerns; Domain entities and Application use-case DTOs must never import or reference Spring HATEOAS types (such as `RepresentationModel`, `EntityModel`, `CollectionModel`, `PagedModel`, `Link`, or `WebMvcLinkBuilder`).
 - No framework annotations (e.g., `@Entity`, `@Service`, `@Repository`) may appear in the Domain layer.
 - Every use case is represented by a dedicated class with a single public method, keeping application behaviour explicit and traceable.
 
@@ -54,9 +56,17 @@ Apply Clean Architecture principles throughout the project:
 
 - Design all APIs following REST principles and standard HTTP semantics (GET, POST, PUT, PATCH, DELETE).
 - Version all APIs in the URL path (e.g., `/api/v1/`). Never introduce breaking changes to an existing version.
+- Implement HATEOAS (Hypermedia as the Engine of Application State) across all REST endpoints to achieve Richardson Maturity Model Level 3.
+- Use standard hypermedia representations adhering to HAL (`application/hal+json`) or standard link relation conventions, exposing an explicit `_links` object containing standard IANA relations and registered custom relations.
+- Every single resource representation must include a canonical `self` link pointing directly to its own resource URI.
+- Provide relational links to associated resources and child collections (e.g., parent, sub-resources, related aggregates) so clients navigate domain relationships through discovered links rather than hard-coded client-side URI templates.
+- Support dynamic state-transition affordances: conditionally expose action links based on the current lifecycle state of the resource and the caller's authorized permissions (e.g., an order in `PENDING` state includes `cancel` and `pay` action links, which are dynamically omitted when the order is in `COMPLETED` or `CANCELLED` state, or when the caller lacks permission). Clients discover permitted operations through hypermedia affordances rather than duplicating business workflow rules on the client.
+- Paginate collections using hypermedia-driven pagination models (`PagedModel` / `CollectionModel`): include standard navigation link relations (`self`, `first`, `prev`, `next`, `last`) alongside collection page metadata (`size`, `totalElements`, `totalPages`, `number`).
+- Generate all hypermedia links dynamically using Spring HATEOAS link builders (e.g., `WebMvcLinkBuilder.linkTo(...)` and `methodOn(...)`) tied directly to controller methods. Never construct URLs using manual string concatenation or hard-coded URI paths.
+- Ensure link generation is fully aware of reverse proxies, ingress controllers, and API gateways: enable and configure Spring's `ForwardedHeaderFilter` (or server-level forwarded header handling) so links preserve external protocol, host, port, and path prefix (`X-Forwarded-*` headers) when deployed behind an edge gateway.
 - Return RFC 9457 Problem Details (`application/problem+json`) for all error responses — never expose stack traces or internal exception messages.
 - Use consistent response envelopes and HTTP status codes throughout the service.
-- Document every endpoint with OpenAPI 3.1 annotations; the spec must always be up to date and generated from code.
+- Document every endpoint with OpenAPI 3.1 annotations, including hypermedia link relations, media types (`application/hal+json`, `application/problem+json`), and representation schemas; the spec must always be up to date and generated from code.
 - Paginate all collection endpoints using cursor-based or offset pagination with explicit page-size limits.
 - Every API endpoint must support localization through the standard `Accept-Language` request header. Resolve the locale once per request (e.g., Spring `LocaleResolver`/`AcceptHeaderLocaleResolver`) against an explicit list of supported locales. The default and fallback language is English (`en`): use it when the caller omits `Accept-Language`, sends an unsupported or malformed value, or when a message key is missing from the requested language's resource bundle (resolve per key, so the English text is returned for that key only). Configure this explicitly (e.g., `AcceptHeaderLocaleResolver.setDefaultLocale(Locale.ENGLISH)`, and `spring.messages.fallback-to-system-locale=false` so the server's OS locale is never used). The English bundle is the source of truth and must contain every message key.
 - Localize all user-facing response messages, validation errors, and exception/RFC 9457 Problem Details fields (`title`, `detail`, and field-level errors) from resource bundles using the resolved locale; never hard-code message text.
@@ -90,6 +100,7 @@ Apply the following Clean Code principles to every class and method:
 - Use Java records for all request DTOs, response DTOs, and value objects.
 - Do not expose JPA entities directly in API responses under any circumstances.
 - Map between layers at the boundary using explicit mapper classes or static factory methods. Do not use reflection-based mapping frameworks.
+- In the Presentation layer, wrap response record DTOs into Spring HATEOAS representation models (`EntityModel<T>`, `CollectionModel<T>`, `PagedModel<T>`, or custom types extending `RepresentationModel<T>`) using dedicated `RepresentationModelAssembler` components to attach canonical, relational, and conditional transition links cleanly and consistently.
 
 ## Validation
 
@@ -206,6 +217,7 @@ Apply the following Clean Code principles to every class and method:
 - Write unit tests using JUnit 5 and Mockito. All unit tests must run without a Spring context.
 - Write integration tests using `@SpringBootTest` with the `test` profile and embedded or ephemeral PostgreSQL; do not use H2 as a substitute for production database behavior.
 - Use `@WebMvcTest` for controller slice tests; use `@DataJpaTest` for repository slice tests.
+- Verify HATEOAS hypermedia links in Presentation slice tests (`@WebMvcTest`) and integration tests: assert the presence, correct URI paths, and valid link relations (`_links.self`, related links, pagination links, and state/authorization-dependent transition affordances).
 - Every use-case class in the Application layer must have dedicated unit tests covering happy-path, boundary, and failure scenarios.
 - Domain entities and value objects must be fully tested without any Spring context.
 - Verify N+1 query counts in repository integration tests using a query-counting interceptor.
